@@ -331,6 +331,10 @@ fn determine_headers(bytes: &Vec<u8>, position: &mut usize) -> Result<HashMap<St
 
 impl HttpMessage {
 	fn new(bytes: &Vec<u8>) -> Result<HttpMessage, Box<dyn Error>> {
+		if (bytes.len() == 0) {
+			return Err("Empty request".into());
+		}
+
 		let mut position: usize = 0;
 		let is_request: bool = determine_request(&bytes)?;
 		let mut method: Option<HttpMethod> = None;
