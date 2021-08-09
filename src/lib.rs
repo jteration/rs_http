@@ -191,7 +191,7 @@ fn get_method(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpMethod, Box<d
 }
 
 fn get_resource(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn Error>> {
-	if bytes[*position] != 47u8 {
+	if bytes[*position] == 32u8 {
 		return Err("Malformed HTTP Message".into());
 	}
 
@@ -347,9 +347,9 @@ impl HttpMessage {
 			check_and_go_past_end_line(bytes, &mut position)?;
 		} else {
 			version = get_version(bytes, &mut position)?;
-			check_and_go_past_end_line(bytes, &mut position)?;
 			// get_status_code
-			// get_status_message
+			// get_reason_phrase
+			check_and_go_past_end_line(bytes, &mut position)?;
 		}
 
 		let headers: HashMap<String, String> = determine_headers(bytes, &mut position)?;
