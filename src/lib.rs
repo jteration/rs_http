@@ -27,7 +27,7 @@ pub struct HttpMessage {
 	method: Option<HttpMethod>,
 	resource: Option<String>,
 	status_code: Option<[u8; 3]>,
-	status_message: Option<String>,
+	reason_phrase: Option<String>,
 	headers: HashMap<String, String>,
 	body: Option<Vec<u8>>,
 }
@@ -210,6 +210,69 @@ fn get_version(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpVersion, Box
 	return Err("6 Malformed HTTP Message".into());
 }
 
+fn get_status_code(bytes: &Vec<u8>, position: &mut usize) -> Result<[u8; 3], Box<dyn Error>> {
+	let mut status_code: [u8; 3] = [0u8; 3];
+
+	// Will be a space after the version
+	if get_byte(bytes, position)? != 32u8 {
+		return Err("9.1 Malformed HTTP Message".into());
+	}
+
+	for i in 0..3 {
+		let byte = get_byte(bytes, position)?;
+		// 0-9
+		if 
+			byte == 48u8 ||
+			byte == 49u8 ||
+			byte == 50u8 ||
+			byte == 51u8 ||
+			byte == 52u8 ||
+			byte == 53u8 ||
+			byte == 54u8 ||
+			byte == 55u8 ||
+			byte == 56u8 ||
+			byte == 57u8
+		{
+			status_code[i] = byte;
+		} else {
+			return Err("9 Malformed HTTP Message".into());
+		}
+	}
+
+	Ok(status_code)
+}
+
+fn get_reason_phrase(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn Error>> {
+	// Will be a space after the code
+	if get_byte(bytes, position)? != 32u8 {
+		return Err("12 Malformed HTTP Message".into());
+	}
+
+	let mut reason_phrase: String = String::new();
+
+	while get_byte_at_offset(bytes, position, 0)? != 13u8 {
+		let byte = get_byte(bytes, position)?;
+		reason_phrase.push(byte as char);
+	}
+
+	Ok(reason_phrase)
+}
+
+fn get_body(bytes: &Vec<u8>, position: &mut usize) -> Result<Option<Vec<u8>>, Box<dyn Error>> {
+	check_and_go_past_end_line(bytes, position)?;
+	let mut body: Vec<u8> = vec![];
+
+	if bytes.len() == *position {
+		return Ok(None);
+	}
+
+	for i in *position..bytes.len() {
+		body.push(bytes[i]);
+	}
+
+	Ok(Some(body))
+}
+
 fn check_and_go_past_end_line(bytes: &Vec<u8>, position: &mut usize) -> Result<(), Box<dyn Error>> {
 	if check_bytes(bytes, position, vec![13u8, 10u8])? {
 		return Ok(());
@@ -247,6 +310,8 @@ fn get_header_value(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box
 }
 
 fn determine_headers(bytes: &Vec<u8>, position: &mut usize) -> Result<HashMap<String, String>, Box<dyn Error>> {
+	check_and_go_past_end_line(bytes, position)?;
+
 	let mut headers: HashMap<String, String> = HashMap::new();
 	let mut done: bool = false;
 
@@ -275,26 +340,22 @@ impl HttpMessage {
 		let mut method: Option<HttpMethod> = None;
 		let mut resource: Option<String> = None;
 		let version: HttpVersion;
-		let status_code: Option<[u8; 3]> = None;
-		let status_message: Option<String> = None;
-		let body: Option<Vec<u8>> = None;
+		let mut status_code: Option<[u8; 3]> = None;
+		let mut reason_phrase: Option<String> = None;
 
 		// Start Line
 		if is_request {
 			method = Some(get_method(bytes, &mut position)?);
 			resource = Some(get_resource(bytes, &mut position)?);
 			version = get_version(bytes, &mut position)?;
-			// get_body
-			check_and_go_past_end_line(bytes, &mut position)?;
 		} else {
 			version = get_version(bytes, &mut position)?;
-			// get_status_code
-			// get_reason_phrase
-			// get_body
-			check_and_go_past_end_line(bytes, &mut position)?;
+			status_code = Some(get_status_code(bytes, &mut position)?);
+			reason_phrase = Some(get_reason_phrase(bytes, &mut position)?);
 		}
 
 		let headers: HashMap<String, String> = determine_headers(bytes, &mut position)?;
+		let body: Option<Vec<u8>> = get_body(bytes, &mut position)?;
 
 		let http_message: HttpMessage = HttpMessage {
 			request: is_request,
@@ -302,7 +363,7 @@ impl HttpMessage {
 			method,
 			resource,
 			status_code,
-			status_message,
+			reason_phrase,
 			headers,
 			body,
 		};
