@@ -89,10 +89,10 @@ fn determine_request(bytes: &Vec<u8>) -> Result<bool, Box<dyn Error>> {
 		72u8 => match bytes[1] {
 			84u8 => Ok(false),
 			69u8 => Ok(true),
-			_ => Err("Malformed HTTP Message".into()),
+			_ => Err("1 Malformed HTTP Message".into()),
 		},
 		71u8 | 80u8 | 68u8 | 79u8 => Ok(true),
-		_ => Err("Malformed HTTP Message".into()),
+		_ => Err("2 Malformed HTTP Message".into()),
 	}
 }
 
@@ -118,7 +118,7 @@ fn get_method(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpMethod, Box<d
 				// O
 				79u8 => {
 					// S, T, space
-					if check_bytes(bytes, position, vec![83u8, 34u8, 32u8])? {
+					if check_bytes(bytes, position, vec![83u8, 84u8, 32u8])? {
 						return Ok(HttpMethod::POST);
 					}
 				}
@@ -156,12 +156,12 @@ fn get_method(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpMethod, Box<d
 		_ => {}
 	}
 
-	Err("Malformed HTTP Message".into())
+	Err("3 Malformed HTTP Message".into())
 }
 
 fn get_resource(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn Error>> {
 	if bytes[*position] == 32u8 {
-		return Err("Malformed HTTP Message".into());
+		return Err("4 Malformed HTTP Message".into());
 	}
 
 	let mut resource = String::new();
@@ -178,7 +178,7 @@ fn get_resource(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn
 fn get_version(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpVersion, Box<dyn Error>> {
 	// H, T, T, P, /
 	if !check_bytes(bytes, position, vec![72u8, 84u8, 84u8, 80u8, 47u8])? {
-		return Err("Malformed HTTP Message".into());
+		return Err("5 Malformed HTTP Message".into());
 	};
 
 	match get_byte(bytes, position)? {
@@ -207,7 +207,7 @@ fn get_version(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpVersion, Box
 		_ => {}
 	}
 
-	return Err("Malformed HTTP Message".into());
+	return Err("6 Malformed HTTP Message".into());
 }
 
 fn check_and_go_past_end_line(bytes: &Vec<u8>, position: &mut usize) -> Result<(), Box<dyn Error>> {
@@ -215,7 +215,7 @@ fn check_and_go_past_end_line(bytes: &Vec<u8>, position: &mut usize) -> Result<(
 		return Ok(());
 	}
 
-	return Err("Malformed HTTP Message".into());
+	return Err("7 Malformed HTTP Message".into());
 }
 
 fn get_header_key(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn Error>> {
@@ -267,7 +267,7 @@ fn determine_headers(bytes: &Vec<u8>, position: &mut usize) -> Result<HashMap<St
 impl HttpMessage {
 	fn new(bytes: &Vec<u8>) -> Result<HttpMessage, Box<dyn Error>> {
 		if bytes.len() < 2 {
-			return Err("5 Malformed HTTP Message".into());
+			return Err("8 Malformed HTTP Message".into());
 		}
 
 		let mut position: usize = 0;
@@ -284,6 +284,7 @@ impl HttpMessage {
 			method = Some(get_method(bytes, &mut position)?);
 			resource = Some(get_resource(bytes, &mut position)?);
 			version = get_version(bytes, &mut position)?;
+			// get_body
 			check_and_go_past_end_line(bytes, &mut position)?;
 		} else {
 			version = get_version(bytes, &mut position)?;
