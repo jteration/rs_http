@@ -58,10 +58,10 @@ fn increment_position(bytes: &Vec<u8>, position: &mut usize, increment_by: usize
 }
 
 fn get_byte(bytes: &Vec<u8>, position: &mut usize) -> Result<u8, Box<dyn Error>> {
-	let b = bytes[*position];
+	let byte = bytes[*position];
 	increment_position(bytes, position, 1)?;
 
-	return Ok(b);
+	Ok(byte)
 }
 
 fn get_byte_at_offset(bytes: &Vec<u8>, position: &usize, offset: usize) -> Result<u8, Box<dyn Error>> {
@@ -179,11 +179,11 @@ fn get_resource(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn
 	}
 
 	let mut resource = String::new();
-	let mut b: u8 = get_byte(bytes, position)?;
+	let mut byte: u8 = get_byte(bytes, position)?;
 
-	while b != 32u8 {
-		resource.push(b as char);
-		b = get_byte(bytes, position)?;
+	while byte != 32u8 {
+		resource.push(byte as char);
+		byte = get_byte(bytes, position)?;
 	}
 
 	Ok(resource)
@@ -297,11 +297,11 @@ fn check_and_go_past_end_line(bytes: &Vec<u8>, position: &mut usize) -> Result<(
 
 fn get_header_key(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn Error>> {
 	let mut header_key: String = String::new();
-	let mut b: u8 = get_byte(bytes, position)?;
+	let mut byte: u8 = get_byte(bytes, position)?;
 
-	while b != 58u8 {
-		header_key.push(b as char);
-		b = get_byte(bytes, position)?;
+	while byte != 58u8 {
+		header_key.push(byte as char);
+		byte = get_byte(bytes, position)?;
 	}
 
 	Ok(header_key)
@@ -311,11 +311,11 @@ fn get_header_value(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box
 	skip_white_space(bytes, position)?;
 
 	let mut header_value: String = String::new();
-	let mut b: u8 = get_byte(bytes, position)?;
+	let mut byte: u8 = get_byte(bytes, position)?;
 
-	while b != 13u8 && get_byte_at_offset(bytes, position, 0)? != 10u8 {
-		header_value.push(b as char);
-		b = get_byte(bytes, position)?;
+	while byte != 13u8 && get_byte_at_offset(bytes, position, 0)? != 10u8 {
+		header_value.push(byte as char);
+		byte = get_byte(bytes, position)?;
 	}
 
 	increment_position(bytes, position, 1)?;
