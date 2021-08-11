@@ -1,16 +1,18 @@
 use std::collections::HashMap;
 use std::error::Error;
 
-#[derive(Debug)]
-enum HttpVersion {
+use crate::HttpMessage::*;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum HttpVersion {
 	Version0_9,
 	Version1_0,
 	Version1_1,
 	Version2_0,
 }
 
-#[derive(Debug)]
-enum HttpMethod {
+#[derive(Debug, PartialEq, Eq)]
+pub enum HttpMethod {
 	GET,
 	PUT,
 	POST,
@@ -20,16 +22,28 @@ enum HttpMethod {
 	OPTIONS,
 }
 
-#[derive(Debug)]
-pub struct HttpMessage {
-	request: bool,
-	version: HttpVersion,
-	method: Option<HttpMethod>,
-	resource: Option<String>,
-	status_code: Option<[u8; 3]>,
-	reason_phrase: Option<String>,
-	headers: HashMap<String, String>,
-	body: Option<Vec<u8>>,
+#[derive(Debug, PartialEq, Eq)]
+pub enum HttpMessage {
+	Request(HttpRequest),
+	Response(HttpResponse)
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct HttpRequest {
+	pub version: HttpVersion,
+	pub method: HttpMethod,
+	pub resource: String,
+	pub headers: HashMap<String, String>,
+	pub body: Option<Vec<u8>>,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct HttpResponse {
+	pub version: HttpVersion,
+	pub status_code: [u8; 3],
+	pub reason_phrase: String,
+	pub headers: HashMap<String, String>,
+	pub body: Option<Vec<u8>>,
 }
 
 fn increment_position(bytes: &Vec<u8>, position: &mut usize, increment_by: usize) -> Result<(), Box<dyn Error>> {
@@ -337,38 +351,41 @@ impl HttpMessage {
 
 		let mut position: usize = 0;
 		let is_request: bool = determine_request(&bytes)?;
-		let mut method: Option<HttpMethod> = None;
-		let mut resource: Option<String> = None;
-		let version: HttpVersion;
-		let mut status_code: Option<[u8; 3]> = None;
-		let mut reason_phrase: Option<String> = None;
 
 		// Start Line
 		if is_request {
-			method = Some(get_method(bytes, &mut position)?);
-			resource = Some(get_resource(bytes, &mut position)?);
-			version = get_version(bytes, &mut position)?;
+			let method = get_method(bytes, &mut position)?;
+			let resource = get_resource(bytes, &mut position)?;
+			let version = get_version(bytes, &mut position)?;
+			let headers: HashMap<String, String> = determine_headers(bytes, &mut position)?;
+			let body: Option<Vec<u8>> = get_body(bytes, &mut position)?;
+
+			let http_message: HttpMessage = Request(HttpRequest {
+				version,
+				method,
+				resource,
+				headers,
+				body,
+			});
+
+			return Ok(http_message);
 		} else {
-			version = get_version(bytes, &mut position)?;
-			status_code = Some(get_status_code(bytes, &mut position)?);
-			reason_phrase = Some(get_reason_phrase(bytes, &mut position)?);
+			let version = get_version(bytes, &mut position)?;
+			let status_code = get_status_code(bytes, &mut position)?;
+			let reason_phrase = get_reason_phrase(bytes, &mut position)?;
+			let headers: HashMap<String, String> = determine_headers(bytes, &mut position)?;
+			let body: Option<Vec<u8>> = get_body(bytes, &mut position)?;
+
+			let http_message: HttpMessage = Response(HttpResponse {
+				version,
+				status_code,
+				reason_phrase,
+				headers,
+				body,
+			});
+
+			return Ok(http_message);
 		}
-
-		let headers: HashMap<String, String> = determine_headers(bytes, &mut position)?;
-		let body: Option<Vec<u8>> = get_body(bytes, &mut position)?;
-
-		let http_message: HttpMessage = HttpMessage {
-			request: is_request,
-			version,
-			method,
-			resource,
-			status_code,
-			reason_phrase,
-			headers,
-			body,
-		};
-
-		Ok(http_message)
 	}
 }
 
