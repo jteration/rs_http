@@ -25,7 +25,7 @@ pub enum HttpMethod {
 #[derive(Debug, PartialEq, Eq)]
 pub enum HttpMessage {
 	Request(HttpRequest),
-	Response(HttpResponse)
+	Response(HttpResponse),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -235,17 +235,16 @@ fn get_status_code(bytes: &Vec<u8>, position: &mut usize) -> Result<[u8; 3], Box
 	for i in 0..3 {
 		let byte = get_byte(bytes, position)?;
 		// 0-9
-		if 
-			byte == 48u8 ||
-			byte == 49u8 ||
-			byte == 50u8 ||
-			byte == 51u8 ||
-			byte == 52u8 ||
-			byte == 53u8 ||
-			byte == 54u8 ||
-			byte == 55u8 ||
-			byte == 56u8 ||
-			byte == 57u8
+		if byte == 48u8
+			|| byte == 49u8
+			|| byte == 50u8
+			|| byte == 51u8
+			|| byte == 52u8
+			|| byte == 53u8
+			|| byte == 54u8
+			|| byte == 55u8
+			|| byte == 56u8
+			|| byte == 57u8
 		{
 			status_code[i] = byte;
 		} else {
