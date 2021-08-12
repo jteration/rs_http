@@ -103,10 +103,10 @@ fn determine_request(bytes: &Vec<u8>, position: &mut usize) -> Result<bool, Box<
 		72u8 => match peek_byte_at_offset(bytes, position, 1)? {
 			84u8 => Ok(false),
 			69u8 => Ok(true),
-			_ => Err("1 Malformed HTTP Message".into()),
+			_ => Err("Malformed HTTP Message".into()),
 		},
 		71u8 | 80u8 | 68u8 | 79u8 => Ok(true),
-		_ => Err("2 Malformed HTTP Message".into()),
+		_ => Err("Malformed HTTP Message".into()),
 	}
 }
 
@@ -170,12 +170,12 @@ fn get_method(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpMethod, Box<d
 		_ => {}
 	}
 
-	Err("3 Malformed HTTP Message".into())
+	Err("Malformed HTTP Message".into())
 }
 
 fn get_resource(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn Error>> {
 	if bytes[*position] == 32u8 {
-		return Err("4 Malformed HTTP Message".into());
+		return Err("Malformed HTTP Message".into());
 	}
 
 	let mut resource = String::new();
@@ -192,7 +192,7 @@ fn get_resource(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn
 fn get_version(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpVersion, Box<dyn Error>> {
 	// H, T, T, P, /
 	if !check_bytes(bytes, position, vec![72u8, 84u8, 84u8, 80u8, 47u8])? {
-		return Err("5 Malformed HTTP Message".into());
+		return Err("Malformed HTTP Message".into());
 	};
 
 	match get_byte(bytes, position)? {
@@ -221,7 +221,7 @@ fn get_version(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpVersion, Box
 		_ => {}
 	}
 
-	return Err("6 Malformed HTTP Message".into());
+	return Err("Malformed HTTP Message".into());
 }
 
 fn get_status_code(bytes: &Vec<u8>, position: &mut usize) -> Result<[u8; 3], Box<dyn Error>> {
@@ -229,7 +229,7 @@ fn get_status_code(bytes: &Vec<u8>, position: &mut usize) -> Result<[u8; 3], Box
 
 	// Will be a space after the version
 	if get_byte(bytes, position)? != 32u8 {
-		return Err("9.1 Malformed HTTP Message".into());
+		return Err("Malformed HTTP Message".into());
 	}
 
 	for i in 0..3 {
@@ -248,7 +248,7 @@ fn get_status_code(bytes: &Vec<u8>, position: &mut usize) -> Result<[u8; 3], Box
 		{
 			status_code[i] = byte;
 		} else {
-			return Err("9 Malformed HTTP Message".into());
+			return Err("Malformed HTTP Message".into());
 		}
 	}
 
@@ -258,7 +258,7 @@ fn get_status_code(bytes: &Vec<u8>, position: &mut usize) -> Result<[u8; 3], Box
 fn get_reason_phrase(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn Error>> {
 	// Will be a space after the code
 	if get_byte(bytes, position)? != 32u8 {
-		return Err("12 Malformed HTTP Message".into());
+		return Err("Malformed HTTP Message".into());
 	}
 
 	let mut reason_phrase: String = String::new();
@@ -291,7 +291,7 @@ fn check_and_go_past_end_line(bytes: &Vec<u8>, position: &mut usize) -> Result<(
 		return Ok(());
 	}
 
-	return Err("7 Malformed HTTP Message".into());
+	return Err("Malformed HTTP Message".into());
 }
 
 fn get_header_key(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box<dyn Error>> {
