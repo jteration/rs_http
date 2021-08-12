@@ -322,7 +322,7 @@ fn get_header_value(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box
 	Ok(header_value)
 }
 
-fn determine_headers(bytes: &Vec<u8>, position: &mut usize) -> Result<HashMap<String, String>, Box<dyn Error>> {
+fn get_headers(bytes: &Vec<u8>, position: &mut usize) -> Result<HashMap<String, String>, Box<dyn Error>> {
 	check_and_go_past_end_line(bytes, position)?;
 
 	let mut headers: HashMap<String, String> = HashMap::new();
@@ -351,12 +351,11 @@ impl HttpMessage {
 		let mut position: usize = 0;
 		let is_request: bool = determine_request(&bytes)?;
 
-		// Start Line
 		if is_request {
 			let method = get_method(bytes, &mut position)?;
 			let resource = get_resource(bytes, &mut position)?;
 			let version = get_version(bytes, &mut position)?;
-			let headers: HashMap<String, String> = determine_headers(bytes, &mut position)?;
+			let headers: HashMap<String, String> = get_headers(bytes, &mut position)?;
 			let body: Option<Vec<u8>> = get_body(bytes, &mut position)?;
 
 			let http_message: HttpMessage = Request(HttpRequest {
@@ -372,7 +371,7 @@ impl HttpMessage {
 			let version = get_version(bytes, &mut position)?;
 			let status_code = get_status_code(bytes, &mut position)?;
 			let reason_phrase = get_reason_phrase(bytes, &mut position)?;
-			let headers: HashMap<String, String> = determine_headers(bytes, &mut position)?;
+			let headers: HashMap<String, String> = get_headers(bytes, &mut position)?;
 			let body: Option<Vec<u8>> = get_body(bytes, &mut position)?;
 
 			let http_message: HttpMessage = Response(HttpResponse {
