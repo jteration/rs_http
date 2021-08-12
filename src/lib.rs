@@ -96,11 +96,11 @@ fn skip_white_space(bytes: &Vec<u8>, position: &mut usize) -> Result<(), Box<dyn
 	Ok(())
 }
 
-fn determine_request(bytes: &Vec<u8>) -> Result<bool, Box<dyn Error>> {
+fn determine_request(bytes: &Vec<u8>, position: &mut usize) -> Result<bool, Box<dyn Error>> {
 	// H, T is response
 	// H, E | G | P | D | O is request
-	match bytes[0] {
-		72u8 => match bytes[1] {
+	match peek_byte_at_offset(bytes, position, 0)? {
+		72u8 => match peek_byte_at_offset(bytes, position, 1)? {
 			84u8 => Ok(false),
 			69u8 => Ok(true),
 			_ => Err("1 Malformed HTTP Message".into()),
@@ -344,12 +344,12 @@ fn get_headers(bytes: &Vec<u8>, position: &mut usize) -> Result<HashMap<String, 
 
 impl HttpMessage {
 	fn new(bytes: &Vec<u8>) -> Result<HttpMessage, Box<dyn Error>> {
-		if bytes.len() < 2 {
-			return Err("8 Malformed HTTP Message".into());
+		if bytes.len() == 0 {
+			return Err("Empty HTTP Message".into());
 		}
 
 		let mut position: usize = 0;
-		let is_request: bool = determine_request(&bytes)?;
+		let is_request: bool = determine_request(&bytes, &mut position)?;
 
 		if is_request {
 			let method = get_method(bytes, &mut position)?;
