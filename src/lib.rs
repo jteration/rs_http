@@ -8,7 +8,7 @@ pub enum HttpVersion {
 	Version0_9,
 	Version1_0,
 	Version1_1,
-	Version2_0,
+	Version2,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -217,7 +217,7 @@ fn get_version(bytes: &Vec<u8>, position: &mut usize) -> Result<HttpVersion, Box
 			};
 		}
 		// 2
-		50u8 => return Ok(HttpVersion::Version2_0),
+		50u8 => return Ok(HttpVersion::Version2),
 		_ => {}
 	}
 
