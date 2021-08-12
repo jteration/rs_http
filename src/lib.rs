@@ -64,7 +64,7 @@ fn get_byte(bytes: &Vec<u8>, position: &mut usize) -> Result<u8, Box<dyn Error>>
 	Ok(byte)
 }
 
-fn get_byte_at_offset(bytes: &Vec<u8>, position: &usize, offset: usize) -> Result<u8, Box<dyn Error>> {
+fn peek_byte_at_offset(bytes: &Vec<u8>, position: &usize, offset: usize) -> Result<u8, Box<dyn Error>> {
 	// Check if char is past the end of the json string
 	if *position + offset > bytes.len() - 1 {
 		return Err("Unexpectedly reached end of message".into());
@@ -86,7 +86,7 @@ fn check_bytes(bytes: &Vec<u8>, position: &mut usize, check: Vec<u8>) -> Result<
 
 fn skip_white_space(bytes: &Vec<u8>, position: &mut usize) -> Result<(), Box<dyn Error>> {
 	loop {
-		if get_byte_at_offset(bytes, position, 0)? != 32u8 {
+		if peek_byte_at_offset(bytes, position, 0)? != 32u8 {
 			break;
 		}
 
@@ -263,7 +263,7 @@ fn get_reason_phrase(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Bo
 
 	let mut reason_phrase: String = String::new();
 
-	while get_byte_at_offset(bytes, position, 0)? != 13u8 {
+	while peek_byte_at_offset(bytes, position, 0)? != 13u8 {
 		let byte = get_byte(bytes, position)?;
 		reason_phrase.push(byte as char);
 	}
@@ -312,7 +312,7 @@ fn get_header_value(bytes: &Vec<u8>, position: &mut usize) -> Result<String, Box
 	let mut header_value: String = String::new();
 	let mut byte: u8 = get_byte(bytes, position)?;
 
-	while byte != 13u8 && get_byte_at_offset(bytes, position, 0)? != 10u8 {
+	while byte != 13u8 && peek_byte_at_offset(bytes, position, 0)? != 10u8 {
 		header_value.push(byte as char);
 		byte = get_byte(bytes, position)?;
 	}
@@ -334,7 +334,7 @@ fn determine_headers(bytes: &Vec<u8>, position: &mut usize) -> Result<HashMap<St
 
 		headers.insert(header_key, header_value);
 
-		if get_byte_at_offset(bytes, position, 0)? == 13u8 && get_byte_at_offset(bytes, position, 1)? == 10u8 {
+		if peek_byte_at_offset(bytes, position, 0)? == 13u8 && peek_byte_at_offset(bytes, position, 1)? == 10u8 {
 			done = true;
 		}
 	}
