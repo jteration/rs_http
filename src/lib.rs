@@ -49,7 +49,7 @@ pub struct HttpResponse {
 fn increment_position(bytes: &Vec<u8>, position: &mut usize, increment_by: usize) -> Result<(), Box<dyn Error>> {
 	// Check if new position is past the end of the json string
 	if *position + increment_by > bytes.len() {
-		return Err("Unexpectedly reached end of request".into());
+		return Err("Unexpectedly reached end of message".into());
 	}
 
 	*position += increment_by;
@@ -67,7 +67,7 @@ fn get_byte(bytes: &Vec<u8>, position: &mut usize) -> Result<u8, Box<dyn Error>>
 fn get_byte_at_offset(bytes: &Vec<u8>, position: &usize, offset: usize) -> Result<u8, Box<dyn Error>> {
 	// Check if char is past the end of the json string
 	if *position + offset > bytes.len() - 1 {
-		return Err("Unexpectedly reached end of request".into());
+		return Err("Unexpectedly reached end of message".into());
 	}
 
 	Ok(bytes[*position + offset])
